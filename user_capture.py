@@ -7,9 +7,16 @@ import os
 def userCapture():
     # Configuración de la cámara
     camera = PiCamera()
-    camera.resolution = (640, 480)
-    camera.framerate = 30
-    rawCapture = PiRGBArray(camera, size=(640, 480))
+    camera.resolution = (1920,1088)
+    camera.framerate = 32
+    camera.brightness = 50 # Adjust the brightness
+    camera.contrast = 0 # Adjust the contrast
+    camera.saturation = 0 # Adjust the saturation
+    camera.exposure_mode = 'auto' # Set the exposure mode to automatic
+    camera.awb_mode = 'auto' # Set the white balance mode to automatic
+
+
+    rawCapture = PiRGBArray(camera, size=(1920,1088))
 
     # Espera a que la cámara se inicie
     time.sleep(0.1)
@@ -19,7 +26,9 @@ def userCapture():
         os.makedirs('user')
 
     # Toma 200 fotos
-    for i in range(50):
+    for i in range(100,300):
+        
+        print('imagen numero '+ str(i+1))
         # Captura una imagen
         camera.capture(rawCapture, format="bgr")
         image = rawCapture.array
@@ -41,7 +50,7 @@ def userCapture():
         rawCapture.truncate(0)
 
         # Espera un segundo antes de tomar la siguiente foto
-        time.sleep(1)
+        time.sleep(.1)
 
     # Libera la cámara
     camera.close()

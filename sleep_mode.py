@@ -6,9 +6,9 @@ async def proximitly_sensor():
     available_memory = mem.available / (1024 * 1024)
     used_memory = mem.used / (1024 * 1024)
     print("proximitly")
-    print(total_memory)
-    print(used_memory)
-    print(available_memory)
+    #print(total_memory)
+    #print(used_memory)
+    #print(available_memory)
 
 async def pressure_sensor():
     print("pressure")

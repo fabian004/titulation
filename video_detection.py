@@ -16,9 +16,15 @@ def videoDetection(mode):
 
     # initialize the camera and grab a reference to the raw camera capture
     camera = PiCamera()
-    camera.resolution = (640, 480)
+    camera.resolution = (1920,1088)
     camera.framerate = 32
-    rawCapture = PiRGBArray(camera, size=(640, 480))
+    camera.brightness = 50 # Adjust the brightness
+    camera.contrast = 0 # Adjust the contrast
+    camera.saturation = 0 # Adjust the saturation
+    camera.exposure_mode = 'auto' # Set the exposure mode to automatic
+    camera.awb_mode = 'auto' # Set the white balance mode to automatic
+
+    rawCapture = PiRGBArray(camera, size=(1920,1088))
 
     # allow the camera to warmup
     time.sleep(0.1)
@@ -40,11 +46,12 @@ def videoDetection(mode):
         for (x, y, w, h) in faces:
             # Extraer la región de interés (ROI) de la imagen en escala de grises correspondiente al rostro detectado
             roi_gray = gray[y:y+h, x:x+w]
+            roi_gray = cv2.resize(roi_gray, (40,40))
 
             # Reconocer a la persona en el rostro detectado utilizando el reconocedor de rostros
             label, confidence = recognizer.predict(roi_gray)
             
-            if confidence > 182:
+            if confidence > 185:
                 # Guardar la imagen como "mypicture.jpg"
                 cv2.imwrite("mypicture.jpg", image)
 
@@ -54,15 +61,18 @@ def videoDetection(mode):
                 mode.sleepModeOff('camera')
                 rawCapture.truncate(0)
                 time.sleep(30)
+                print("A GRABAR")
             else:
                 print('No eres fabian' + str(confidence))
             # Dibujar un rectángulo alrededor del rostro detectado y mostrar el nombre de la persona reconocida y la confianza en la predicción
-            #cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            #cv2.putText(image, f'{label}:{confidence}', (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+            cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)
+            cv2.putText(image, f'{label}:{confidence}', (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
             
         # display the image on screen
-        ##cv2.imshow("Frame", image)
-        ##key = cv2.waitKey(1) & 0xFF
+        new_size = (400, 300)
+        resized_img = cv2.resize(image, new_size)
+        cv2.imshow("Frame", resized_img)
+        key = cv2.waitKey(1) & 0xFF
 
         # clear the stream in preparation for the next frame
         rawCapture.truncate(0)
