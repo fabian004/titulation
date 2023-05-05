@@ -4,69 +4,82 @@ from picamera.array import PiRGBArray
 import time
 import face_recognition
 
+
+
 def videoDetection(mode):
-    print('Ya o que')
-    # Cargar la imagen de referencia y convertirla a RGB
-    ref_image = face_recognition.load_image_file("mypicture.jpg")
+    
+    # initialize the camera and grab a reference to the raw camera capture
+    camera = PiCamera()
+    camera.resolution = (1280,720)
+    camera.framerate = 32
+    camera.brightness = 50 # Adjust the brightness
+    camera.contrast = 0 # Adjust the contrast
+    camera.saturation = 0 # Adjust the saturation
+    camera.exposure_mode = 'auto' # Set the exposure mode to automatic
+    camera.awb_mode = 'auto' # Set the white balance mode to automatic
+
+    rawCapture = PiRGBArray(camera, size=(1280,720))
+
+    # allow the camera to warmup
+    time.sleep(0.1)
+    
+    ref_image = face_recognition.load_image_file("/home/fabian04/Desktop/titulation/mypicture.jpg")
     ref_image = cv2.cvtColor(ref_image, cv2.COLOR_BGR2RGB)
 
     # Codificar la imagen de referencia
-    ref_encoding = face_recognition.face_encodings(ref_image)[0]
+    ref_encoding = face_recognition.face_encodings(ref_image)
+    ref_encoding = ref_encoding[0]
 
-    # Inicializar la cámara y obtener una referencia a la captura de la cámara en bruto
-    camera = PiCamera()
-    camera.resolution = (640,368)
-    camera.framerate = 32
-    rawCapture = PiRGBArray(camera, size=(640,368))
-
-    # Permitir que la cámara se caliente
-    time.sleep(0.1)
-
-    # Capturar fotogramas de la cámara
+    # capture frames from the camera
     for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
-        # Obtener la imagen en bruto como un array NumPy y revertir la imagen
+        # grab the raw NumPy array representing the image, then initialize the timestamp
+        # and occupied/unoccupied text
         image = frame.array
-        image = cv2.flip(image, 1)
-
-        # Convertir la imagen a RGB para la detección de rostros utilizando face_recognition
-        rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            
+        small_image = cv2.resize(image, (0, 0), fx=0.25, fy=0.25)
+        rgb_small_image = cv2.cvtColor(small_image, cv2.COLOR_BGR2RGB)
 
         # Detectar los rostros en la imagen utilizando la biblioteca face_recognition
-        face_locations = face_recognition.face_locations(rgb_image)
-        face_encodings = face_recognition.face_encodings(rgb_image, face_locations)
+        face_locations = face_recognition.face_locations(rgb_small_image)
 
-        # Recorrer la lista de rostros detectados y compararlos con la imagen de referencia
+        #print(f"Se encontraron {len(face_locations)} rostros en la imagen.") # Para ver cuántos rostros se detectaron
+        
+        face_encodings = face_recognition.face_encodings(rgb_small_image, face_locations)
+
+        # display the image on screen
         for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
-            # Comparar el rostro detectado con la imagen de referencia
+            top *= 4
+            right *= 4
+            bottom *= 4
+            left *= 4
+
             matches = face_recognition.compare_faces([ref_encoding], face_encoding)
-            
-            # Si hay una coincidencia, guardar la imagen y mostrar un mensaje de confirmación
             if matches[0]:
-                #cv2.imwrite("mypicture.jpg", image)
+                cv2.rectangle(image, (left, top), (right, bottom), (0, 255, 0), 2)
+                cv2.putText(image, "Match", (left, top - 6), cv2.FONT_HERSHEY_DUPLEX, 0.6, (0, 255, 0), 1)
+                cv2.imwrite("mypicture.jpg", image)
                 print("Imagen guardada como 'mypicture.jpg'")
-                print('Hola Fabian')
                 mode.sleepModeOff('camera')
                 rawCapture.truncate(0)
                 time.sleep(30)
             else:
-                print('No eres Fabian')
-            
-            # Dibujar un rectángulo alrededor del rostro detectado
-            cv2.rectangle(image, (left, top), (right, bottom), (0, 255, 0), 2)
-        
-        # Mostrar la imagen en pantalla
+                cv2.rectangle(image, (left, top), (right, bottom), (0, 0, 255), 2)
+                cv2.putText(image, "No Match", (left, top - 6), cv2.FONT_HERSHEY_DUPLEX, 0.6, (0, 0, 255), 1)
+        # display the image on screen
         new_size = (400, 300)
         resized_img = cv2.resize(image, new_size)
         cv2.imshow("Frame", resized_img)
         key = cv2.waitKey(1) & 0xFF
 
-        # Limpiar el stream en preparación para el siguiente fotograma
+        # clear the stream in preparation for the next frame
         rawCapture.truncate(0)
 
-        # Si se presiona la tecla 'q', salir del bucle
-        if key == ord("q"):
-            break
+        # if the `q` key was pressed, break from the loop
+        ##if key == ord("q"):
+        ##    break
 
-    # Limpiar la cámara y cerrar todas las ventanas abiertas
+    # cleanup the camera and close any open windows
     camera.close()
+    
     cv2.destroyAllWindows()
+    

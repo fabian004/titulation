@@ -1,6 +1,3 @@
-import asyncio
-import psutil
-
 from luma.core.interface.serial import i2c
 from luma.oled.device import sh1106
 from luma.core.render import canvas
@@ -35,31 +32,29 @@ images = [
 images = [image.resize((width, height), Image.LANCZOS) for image in images]
 
 
-async def proximitly_sensor():
-    mem = psutil.virtual_memory()
-    total_memory = mem.total / (1024 * 1024)
-    available_memory = mem.available / (1024 * 1024)
-    used_memory = mem.used / (1024 * 1024)
-    print("proximitly")
+# Read gyroscope data and display on OLED
+
+while True:
+    print("Temp : "+str(mpu.get_temp()))
+    print()
+
+    accel_data = mpu.get_accel_data()
+    print("Acc X : "+str(accel_data['x']))
+    print("Acc Y : "+str(accel_data['y']))
+    print("Acc Z : "+str(accel_data['z']))
+    print()
+
+    gyro_data = mpu.get_gyro_data()
+    print("Gyro X : "+str(gyro_data['x']))
+    print("Gyro Y : "+str(gyro_data['y']))
+    print("Gyro Z : "+str(gyro_data['z']))
+    print()
+    print("-------------------------------")
+    
+    # Loop over the images and display each one on the OLED display
     for image in images:
         with canvas(device1) as draw:
             draw.bitmap((0, 0), image, fill=1)
         with canvas(device2) as draw:
             draw.bitmap((0, 0), image, fill=1)
         time.sleep(1)
-    #print(total_memory)
-    #print(used_memory)
-    #print(available_memory)
-
-async def pressure_sensor():
-    print("pressure")
-
-async def main():
-    await asyncio.gather(proximitly_sensor(), pressure_sensor())
-
-def sleepMode(mode):
-    asyncio.run(main())
-
-
-    
-
